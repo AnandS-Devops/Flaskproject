@@ -16,18 +16,22 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqubeserver') {
-                    sh '''
-                    sonar-scanner \
-                    -Dsonar.projectKey=demo-app \
-                    -Dsonar.projectName=demo-app \
-                    -Dsonar.sources=.
-                    '''
-                }
-            }
+          stage('SonarQube Analysis') {
+    steps {
+        script {
+            SCANNER_HOME = tool 'sonar-scanner'
         }
+
+        withSonarQubeEnv('sonarqubeserver') {
+            sh """
+            ${SCANNER_HOME}/bin/sonar-scanner \
+            -Dsonar.projectKey=demo-app \
+            -Dsonar.projectName=demo-app \
+            -Dsonar.sources=.
+            """
+        }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
