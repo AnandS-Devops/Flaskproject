@@ -1,20 +1,25 @@
 from app import app
 
-
-def test_home():
-    client = app.test_client()
-    res = client.get("/")
-    assert res.status_code == 200
-    assert res.get_json()["message"] == "Hello from Jenkins demo app!"
+client = app.test_client()
 
 
 def test_health():
-    client = app.test_client()
-    res = client.get("/health")
-    assert res.get_json() == {"status": "ok"}
+    assert client.get('/health').get_json() == {'status': 'ok'}
 
 
-def test_add():
-    client = app.test_client()
-    res = client.get("/add/2/3")
-    assert res.get_json()["result"] == 5
+def test_message_is_kept():
+    assert client.get('/api').get_json() == {'message': 'Hello from Jenkins demo app!'}
+
+
+def test_ui_page():
+    r = client.get('/')
+    assert r.status_code == 200 and b'Jenkins Demo App' in r.data
+
+
+def test_task_flow():
+    created = client.post('/api/tasks', json={'title': 'write tests'})
+    assert created.status_code == 201
+    task_id = created.get_json()['id']
+    assert any(t['id'] == task_id for t in client.get('/api/tasks').get_json())
+    assert client.delete(f'/api/tasks/{task_id}').status_code == 204
+    assert client.post('/api/tasks', json={'title': ''}).status_code == 400
